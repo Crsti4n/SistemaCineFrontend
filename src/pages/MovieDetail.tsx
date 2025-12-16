@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, Calendar, MapPin, DollarSign, Loader2 } from 'lucide-react';
+import { Clock, Calendar, MapPin, DollarSign, Loader2 } from 'lucide-react'; // Removed User from types, as it's not directly used here
 import { peliculasService, funcionesService, comprasService } from '../api/services';
 import { useAuth } from '../context/AuthContext';
 import { Toast } from '../components/Toast';
@@ -9,7 +9,7 @@ import type { Pelicula, Funcion } from '../types';
 export const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isEmployee } = useAuth(); // Added isEmployee
 
   const [pelicula, setPelicula] = useState<Pelicula | null>(null);
   const [funciones, setFunciones] = useState<Funcion[]>([]);
@@ -46,6 +46,13 @@ export const MovieDetail = () => {
       navigate('/login');
       return;
     }
+    // NEW: Redirect employees to employee sale page
+    if (isEmployee) {
+      navigate('/employee-sale', { state: { funcion } });
+      return;
+    }
+    // NEW: Redirect clients to checkout page
+    navigate('/checkout', { state: { funcion } });
     setSelectedFuncion(funcion);
     setShowConfirm(true);
   };
@@ -56,7 +63,7 @@ export const MovieDetail = () => {
     try {
       setPurchasing(true);
       const compra = await comprasService.create({
-        usuarioId: 1,
+        usuarioId: user.id, // Use actual user ID
         metodoPagoId: 1,
         total: selectedFuncion.precio,
       });

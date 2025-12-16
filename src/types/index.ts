@@ -1,7 +1,7 @@
 export interface User {
   token: string;
   usuario: string;
-  rol: 'Admin' | 'Cliente';
+  rol: 'Admin' | 'Cliente' | 'Empleado'; // Added 'Empleado' role
 }
 
 export interface LoginRequest {

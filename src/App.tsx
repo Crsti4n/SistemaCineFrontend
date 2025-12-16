@@ -6,6 +6,7 @@ import { Home } from './pages/Home';
 import { MovieDetail } from './pages/MovieDetail';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
+import { EmployeeSalePage } from './pages/EmployeeSalePage'; // Added EmployeeSalePage
 import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
@@ -23,6 +24,15 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            {/* NEW: Route for Employee Sale Page */}
+            <Route
+              path="employee-sale"
+              element={
+                <ProtectedRoute requireEmployee>
+                  <EmployeeSalePage />
                 </ProtectedRoute>
               }
             />

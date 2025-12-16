@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Film, LogOut, User, LayoutDashboard } from 'lucide-react';
+import { Film, LogOut, User, LayoutDashboard, Briefcase } from 'lucide-react'; // Added Briefcase icon
 import { useAuth } from '../context/AuthContext';
 
 export const Navbar = () => {
-  const { user, logout, isAuthenticated, isAdmin } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin, isEmployee } = useAuth(); // Added isEmployee
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -50,6 +50,17 @@ export const Navbar = () => {
                   >
                     <LayoutDashboard className="w-5 h-5" />
                     Panel Admin
+                  </Link>
+                )}
+
+                {/* NEW: Link for Employee Panel */}
+                {isEmployee && (
+                  <Link
+                    to="/employee-sale"
+                    className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors font-medium"
+                  >
+                    <Briefcase className="w-5 h-5" />
+                    Panel Empleado
                   </Link>
                 )}
 
