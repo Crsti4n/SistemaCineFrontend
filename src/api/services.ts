@@ -104,21 +104,21 @@ export const comprasService = {
 // NEW: MetodoPago Service
 export const metodoPagoService = {
   getAll: async (): Promise<MetodoPago[]> => {
-    const { data } = await axiosInstance.get('/api/MetodoPagos');
+    const { data } = await axiosInstance.get('/api/MetodoPagoes');
     return data;
   },
 
   create: async (metodoPago: Omit<MetodoPago, 'id'>): Promise<MetodoPago> => {
-    const { data } = await axiosInstance.post('/api/MetodoPagos', metodoPago);
+    const { data } = await axiosInstance.post('/api/MetodoPagoes', metodoPago);
     return data;
   },
 
   update: async (id: number, metodoPago: Omit<MetodoPago, 'id'>): Promise<MetodoPago> => {
-    const { data } = await axiosInstance.put(`/api/MetodoPagos/${id}`, metodoPago);
+    const { data } = await axiosInstance.put(`/api/MetodoPagoes/${id}`, metodoPago);
     return data;
   },
 
   delete: async (id: number): Promise<void> => {
-    await axiosInstance.delete(`/api/MetodoPagos/${id}`);
+    await axiosInstance.delete(`/api/MetodoPagoes/${id}`);
   },
 };

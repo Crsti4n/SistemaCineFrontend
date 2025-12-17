@@ -10,7 +10,8 @@ export const CheckoutPage = () => {
     const { user, isAuthenticated, isEmployee } = useAuth(); // Obtener datos del usuario autenticado
     const location = useLocation();
     const navigate = useNavigate();
-    const { funcion } = location.state as { funcion: Funcion }; // Obtener la función de la compra del estado de la ruta
+    const state = location.state as { funcion: Funcion } | null; // Obtener el estado de forma segura
+    const funcion = state?.funcion; // Obtener la función si existe, sino será undefined
 
     const [metodosPago, setMetodosPago] = useState<MetodoPago[]>([]);
     const [loading, setLoading] = useState(true);
@@ -21,7 +22,19 @@ export const CheckoutPage = () => {
     // --- Datos de la compra ---
     // En una aplicación real, el userId debería obtenerse del contexto de autenticación.
     // El totalCompra se obtiene de la función pasada.
-    const userId = 1; // ID del usuario logueado (ejemplo, reemplazar con el real) // Revert: Usar ID fijo
+
+    // Función para extraer el ID del token JWT si no está presente en el objeto user
+    const getUserId = () => {
+        if (user?.id) return user.id;
+        if (user?.token) {
+            try {
+                const payload = JSON.parse(atob(user.token.split('.')[1]));
+                return payload.nameid ? Number(payload.nameid) : undefined;
+            } catch (e) { console.error("Error al decodificar token", e); }
+        }
+        return undefined;
+    };
+    const userId = getUserId();
     const totalCompra = funcion ? funcion.precio : 0;
 
     useEffect(() => {
@@ -56,8 +69,17 @@ export const CheckoutPage = () => {
             setError('Por favor, selecciona un método de pago antes de continuar.');
             return;
         }
-        if (!funcion || !userId) { // Revert: userId fijo
-            setError('Datos de compra incompletos. Por favor, vuelve a intentarlo.');
+
+        // Debug para ver qué está fallando en la consola
+        console.log('Intento de pago:', { funcion, user, userId, selectedMetodoPagoId });
+
+        if (!funcion) {
+            setError('Error: No se encontró la información de la función.');
+            return;
+        }
+
+        if (!userId) {
+            setError('Error: No se pudo identificar al usuario. Por favor, recarga la página o inicia sesión nuevamente.');
             return;
         }
 
@@ -96,86 +118,81 @@ export const CheckoutPage = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen bg-gray-900 text-white"> {/* Revert: Clases originales */}
-                <Loader2 className="w-12 h-12 text-blue-600 animate-spin" /> {/* Revert: Clases originales */}
+            <div className="flex justify-center items-center h-screen bg-gray-900 text-white">
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
                 <p className="ml-3 text-lg">Cargando opciones de pago...</p>
             </div>
         );
     }
 
-    // Mostrar error si no se pudo cargar la función o los métodos de pago
-    if (error && !isProcessingPayment) {
-        return <div className="text-center text-red-500 py-10">{error}</div>; {/* Revert: Clases originales */ }
-    }
-
     // Si no hay función, mostrar un mensaje de error
     if (!funcion) {
-        return <div className="text-center text-red-500 py-10">No se ha proporcionado información de la función para la compra.</div>; {/* Revert: Clases originales */ }
+        return <div className="text-center text-red-500 py-10">No se ha proporcionado información de la función para la compra.</div>;
     }
 
     return (
-        <div className="container mx-auto p-8 bg-gray-900 text-white rounded-lg shadow-xl max-w-2xl mt-10"> {/* Revert: Clases originales */}
-            <h1 className="text-3xl font-bold mb-6 text-center">Finalizar Compra</h1> {/* Revert: Clases originales */}
+        <div className="container mx-auto p-8 bg-gray-900 text-white rounded-lg shadow-xl max-w-2xl mt-10">
+            <h1 className="text-3xl font-bold mb-6 text-center">Finalizar Compra</h1>
 
             {/* Resumen de la Compra */}
-            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-6"> {/* Revert: Clases originales */}
-                <h2 className="text-2xl font-semibold mb-4">Resumen de tu Pedido</h2> {/* Revert: Clases originales */}
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3"> {/* Revert: Clases originales */}
-                    <p className="text-gray-300">Película:</p> {/* Revert: Clases originales */}
-                    <p className="text-white font-medium">{funcion.pelicula?.titulo || 'N/A'}</p> {/* Revert: Clases originales */}
+            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-6">
+                <h2 className="text-2xl font-semibold mb-4">Resumen de tu Pedido</h2>
+                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3">
+                    <p className="text-gray-300">Película:</p>
+                    <p className="text-white font-medium">{funcion.pelicula?.titulo || 'N/A'}</p>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3"> {/* Revert: Clases originales */}
-                    <p className="text-gray-300">Fecha y Hora:</p> {/* Revert: Clases originales */}
-                    <p className="text-white font-medium">{new Date(funcion.fechaHora).toLocaleString('es-ES')}</p> {/* Revert: Clases originales */}
+                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3">
+                    <p className="text-gray-300">Fecha y Hora:</p>
+                    <p className="text-white font-medium">{new Date(funcion.fechaHora).toLocaleString('es-ES')}</p>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3"> {/* Revert: Clases originales */}
-                    <p className="text-gray-300">Sala:</p> {/* Revert: Clases originales */}
-                    <p className="text-white font-medium">{funcion.sala.nombre}</p> {/* Revert: Clases originales */}
+                <div className="flex justify-between items-center border-b border-gray-700 pb-3 mb-3">
+                    <p className="text-gray-300">Sala:</p>
+                    <p className="text-white font-medium">{funcion.sala.nombre}</p>
                 </div>
                 <div className="flex justify-between items-center pb-3 mb-3">
-                    <p className="text-gray-300">Total a pagar:</p> {/* Revert: Clases originales */}
-                    <p className="text-green-400 font-bold text-3xl">S/ {funcion.precio.toFixed(2)}</p> {/* Revert: Clases originales */}
+                    <p className="text-gray-300">Total a pagar:</p>
+                    <p className="text-green-400 font-bold text-3xl">S/ {funcion.precio.toFixed(2)}</p>
                 </div>
             </div>
 
             {/* Selección de Método de Pago */}
-            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700"> {/* Revert: Clases originales */}
-                <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-white"> {/* Revert: Clases originales */}
-                    <CreditCard className="w-6 h-6 text-blue-400" /> {/* Revert: Clases originales */}
+            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-white">
+                    <CreditCard className="w-6 h-6 text-blue-400" />
                     Selecciona tu Método de Pago
                 </h2>
                 {metodosPago.length === 0 ? (
-                    <p className="text-gray-400 text-lg">No hay métodos de pago disponibles en este momento.</p> {/* Revert: Clases originales */}
+                    <p className="text-gray-400 text-lg">No hay métodos de pago disponibles en este momento.</p>
                 ) : (
-                <div className="space-y-4">
-                    {metodosPago.map((metodo) => (
-                        <label
-                            key={metodo.id}
-                            className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${selectedMetodoPagoId === metodo.id
-                                ? 'border-blue-500 bg-blue-900/20 shadow-md' // Revert: Clases originales
-                                : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50' // Revert: Clases originales
-                                }`}
-                        >
-                            <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={metodo.id}
-                                checked={selectedMetodoPagoId === metodo.id}
-                                onChange={() => setSelectedMetodoPagoId(metodo.id)} // Usar variables de tema
-                                className="form-radio h-5 w-5 text-blue-600 bg-gray-900 border-gray-500 focus:ring-blue-500" // Revert: Clases originales
-                            />
-                            <span className="ml-3 text-lg font-medium text-white">{metodo.nombre}</span> {/* Revert: Clases originales */}
-                        </label>
-                    ))}
-                </div>
+                    <div className="space-y-4">
+                        {metodosPago.map((metodo) => (
+                            <label
+                                key={metodo.id}
+                                className={`flex items-center p-4 rounded-lg border cursor-pointer transition-all ${selectedMetodoPagoId === metodo.id
+                                    ? 'border-blue-500 bg-blue-900/20 shadow-md'
+                                    : 'border-gray-600 bg-gray-700/30 hover:bg-gray-700/50'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="paymentMethod"
+                                    value={metodo.id}
+                                    checked={selectedMetodoPagoId === metodo.id}
+                                    onChange={() => setSelectedMetodoPagoId(metodo.id)}
+                                    className="form-radio h-5 w-5 text-blue-600 bg-gray-900 border-gray-500 focus:ring-blue-500"
+                                />
+                                <span className="ml-3 text-lg font-medium text-white">{metodo.nombre}</span>
+                            </label>
+                        ))}
+                    </div>
                 )}
 
-                {error && <p className="bg-red-900/30 text-red-300 p-3 rounded-lg mt-6 text-sm">{error}</p>} {/* Revert: Clases originales */}
+                {error && <p className="bg-red-900/30 text-red-300 p-3 rounded-lg mt-6 text-sm">{error}</p>}
 
                 <button
                     onClick={handlePayment}
                     disabled={selectedMetodoPagoId === null || isProcessingPayment}
-                    className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95" // Revert: Clases originales
+                    className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
                 >
                     {isProcessingPayment && <Loader2 className="w-5 h-5 animate-spin" />}
                     {isProcessingPayment ? 'Procesando Pago...' : `Pagar S/ ${funcion.precio.toFixed(2)}`}

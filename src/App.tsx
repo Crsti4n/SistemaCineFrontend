@@ -7,6 +7,7 @@ import { MovieDetail } from './pages/MovieDetail';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { EmployeeSalePage } from './pages/EmployeeSalePage'; // Added EmployeeSalePage
+import { CheckoutPage } from './pages/CheckoutPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route index element={<Home />} />
             <Route path="pelicula/:id" element={<MovieDetail />} />
             <Route path="login" element={<Login />} />
+            <Route path="checkout" element={<CheckoutPage />} />
             <Route path="registro" element={<Register />} />
             <Route
               path="admin"

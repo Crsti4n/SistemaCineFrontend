@@ -53,8 +53,6 @@ export const MovieDetail = () => {
     }
     // NEW: Redirect clients to checkout page
     navigate('/checkout', { state: { funcion } });
-    setSelectedFuncion(funcion);
-    setShowConfirm(true);
   };
 
   const handleConfirmPurchase = async () => {
