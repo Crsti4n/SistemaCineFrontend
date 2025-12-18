@@ -60,7 +60,7 @@ export const peliculasService = {
 // NEW: Generos Service
 export const generosService = {
   getAll: async (): Promise<Genero[]> => {
-    const { data } = await axiosInstance.get('/api/Generos');
+    const { data } = await axiosInstance.get('/api/Generoes');
     return data;
   },
 };

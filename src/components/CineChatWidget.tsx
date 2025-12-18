@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
+import api from '../api/axios'; // Import the configured axios instance
 
 type Message = {
   sender: 'user' | 'bot';
   text: string;
+  timestamp?: string; // Add timestamp for history
 };
 
 export const CineChatWidget: React.FC = () => {
@@ -12,6 +14,7 @@ export const CineChatWidget: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [hasLoadedHistory, setHasLoadedHistory] = useState<boolean>(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -23,19 +26,38 @@ export const CineChatWidget: React.FC = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // Effect to load chat history
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([
-        { sender: 'bot', text: '¡Hola! Soy el asistente de CineUNAS 🍿. ¿Buscas horarios o precios?' }
-      ]);
-    }
-  }, [isOpen]);
+    const fetchHistory = async () => {
+      if (isOpen && !hasLoadedHistory) {
+        setIsTyping(true);
+        try {
+          const { data: history } = await api.get<Message[]>('/api/chat/history');
+          if (history.length > 0) {
+            setMessages(history);
+          } else {
+            // If no history, provide the initial welcome message
+            setMessages([{ sender: 'bot', text: '¡Hola! Soy el asistente de CineUNAS 🍿. ¿Buscas horarios o precios?' }]);
+          }
+          setHasLoadedHistory(true);
+        } catch (error) {
+          console.error('Failed to fetch chat history:', error);
+          // Show a local error message if history fails to load
+          setMessages([{ sender: 'bot', text: 'Lo siento, no pude cargar el historial. Por favor, intenta de nuevo más tarde.' }]);
+        } finally {
+          setIsTyping(false);
+        }
+      }
+    };
+
+    fetchHistory();
+  }, [isOpen, hasLoadedHistory]);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
@@ -44,11 +66,21 @@ export const CineChatWidget: React.FC = () => {
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botResponse: Message = { sender: 'bot', text: 'Gracias por tu mensaje. De momento solo puedo ofrecerte respuestas genéricas, pero mi equipo de desarrollo está trabajando para darme más superpoderes. ¡Vuelve pronto!' };
+    try {
+      const { data } = await api.post<{ response: string }>('/api/chat', {
+        message: inputValue,
+      });
+
+      const botResponse: Message = { sender: 'bot', text: data.response };
       setMessages(prev => [...prev, botResponse]);
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      const errorResponse: Message = { sender: 'bot', text: 'Lo siento, ocurrió un error al contactar a mi sistema. Por favor, intenta de nuevo.' };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -106,7 +138,7 @@ export const CineChatWidget: React.FC = () => {
               <button
                 type="submit"
                 className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50"
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isTyping}
               >
                 <Send size={18} />
               </button>
