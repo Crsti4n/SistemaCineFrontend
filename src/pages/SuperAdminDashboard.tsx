@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Calendar, User, DollarSign, CreditCard, Loader2, Film, Plus, Pencil, Trash2, Search, Users } from 'lucide-react';
-import { comprasService, peliculasService, generosService, clasificacionesService, metodoPagoService, usuariosService } from '../api/services';
+import { comprasService, peliculasService, generosService, clasificacionesService, metodoPagoService, usuariosService, usuariosAdminService } from '../api/services';
+import { useAuth } from '../context/AuthContext';
 import { Toast } from '../components/Toast';
 import { MovieForm } from '../components/MovieForm';
 import { MetodoPagoForm } from '../components/MetodoPagoForm';
 import { UserForm } from '../components/UserForm';
-import type { Compra, Pelicula, Genero, Clasificacion, MetodoPago, UsuarioCompleto, CreateUserRequest } from '../types';
+import { SuperUserForm } from '../components/SuperUserForm';
+import type { Compra, Pelicula, Genero, Clasificacion, MetodoPago, UsuarioCompleto, CreateUserRequest, AdminUsuarioCompleto, CreateAdminUserRequest } from '../types';
 
-export const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'ventas' | 'peliculas' | 'metodosPago' | 'empleados'>('ventas');
+export const SuperAdminDashboard = () => {
+  const { isSuperUsuario } = useAuth();
+  const [activeTab, setActiveTab] = useState<'ventas' | 'peliculas' | 'metodosPago' | 'usuarios'>('ventas');
   const [compras, setCompras] = useState<Compra[]>([]);
   const [peliculas, setPeliculas] = useState<Pelicula[]>([]);
   const [metodosPago, setMetodosPago] = useState<MetodoPago[]>([]);
-  const [empleados, setEmpleados] = useState<UsuarioCompleto[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioCompleto[] | AdminUsuarioCompleto[]>([]);
   const [generos, setGeneros] = useState<Genero[]>([]);
   const [clasificaciones, setClasificaciones] = useState<Clasificacion[]>([]);
 
@@ -29,7 +32,7 @@ export const AdminDashboard = () => {
 
   // User Form states
   const [showUserForm, setShowUserForm] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UsuarioCompleto | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UsuarioCompleto | AdminUsuarioCompleto | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -53,10 +56,15 @@ export const AdminDashboard = () => {
       } else if (activeTab === 'metodosPago') {
         const metodosData = await metodoPagoService.getAll();
         setMetodosPago(metodosData);
-      } else if (activeTab === 'empleados') {
-        const usuariosData = await usuariosService.getAll();
-        // Filtrar solo empleados (rolId: 3)
-        setEmpleados(usuariosData.filter(u => u.rolId === 3));
+      } else if (activeTab === 'usuarios') {
+        // SuperUsuario usa /api/UsuariosAdmin, Admin usa /api/Usuarios
+        if (isSuperUsuario) {
+          const usuariosData = await usuariosAdminService.getAll();
+          setUsuarios(usuariosData);
+        } else {
+          const usuariosData = await usuariosService.getAll();
+          setUsuarios(usuariosData);
+        }
       }
     } catch (err) {
       setError(`Error al cargar los datos de ${activeTab}`);
@@ -162,27 +170,36 @@ export const AdminDashboard = () => {
     setShowUserForm(true);
   };
 
-  const openEditUserModal = (user: UsuarioCompleto) => {
+  const openEditUserModal = (user: UsuarioCompleto | AdminUsuarioCompleto) => {
     setSelectedUser(user);
     setShowUserForm(true);
   };
 
-  const handleUserSubmit = async (userData: Partial<CreateUserRequest>) => {
+  const handleUserSubmit = async (userData: Partial<CreateUserRequest> | Partial<CreateAdminUserRequest>) => {
     try {
-      // Admin solo usa Usuarios endpoint y solo crea/edita Empleados
-      if (selectedUser) {
-        await usuariosService.update(selectedUser.id, userData);
-        setToast({ message: 'Empleado actualizado con éxito', type: 'success' });
+      if (isSuperUsuario) {
+        // SuperUsuario usa UsuariosAdmin endpoint
+        if (selectedUser) {
+          await usuariosAdminService.update(selectedUser.id, userData as Partial<CreateAdminUserRequest>);
+          setToast({ message: 'Usuario actualizado con éxito', type: 'success' });
+        } else {
+          await usuariosAdminService.create(userData as CreateAdminUserRequest);
+          setToast({ message: 'Usuario creado con éxito', type: 'success' });
+        }
       } else {
-        // Forzar rolId: 3 (Empleado)
-        const empleadoData = { ...userData as CreateUserRequest, rolId: 3 };
-        await usuariosService.create(empleadoData);
-        setToast({ message: 'Empleado creado con éxito', type: 'success' });
+        // Admin usa Usuarios endpoint
+        if (selectedUser) {
+          await usuariosService.update(selectedUser.id, userData as Partial<CreateUserRequest>);
+          setToast({ message: 'Usuario actualizado con éxito', type: 'success' });
+        } else {
+          await usuariosService.create(userData as CreateUserRequest);
+          setToast({ message: 'Usuario creado con éxito', type: 'success' });
+        }
       }
       setShowUserForm(false);
       await loadData();
     } catch (err) {
-      setToast({ message: 'Error al guardar el empleado', type: 'error' });
+      setToast({ message: 'Error al guardar el usuario', type: 'error' });
       console.error('Error saving user:', err);
     }
   };
@@ -190,11 +207,16 @@ export const AdminDashboard = () => {
   const handleDeleteUser = async (id: number) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
       try {
-        await usuariosService.delete(id);
-        setToast({ message: 'Empleado eliminado con éxito', type: 'success' });
+        // SuperUsuario usa UsuariosAdmin endpoint, Admin usa Usuarios endpoint
+        if (isSuperUsuario) {
+          await usuariosAdminService.delete(id);
+        } else {
+          await usuariosService.delete(id);
+        }
+        setToast({ message: 'Usuario eliminado con éxito', type: 'success' });
         await loadData();
       } catch (err) {
-        setToast({ message: 'Error al eliminar el empleado', type: 'error' });
+        setToast({ message: 'Error al eliminar el usuario', type: 'error' });
         console.error('Error deleting user:', err);
       }
     }
@@ -293,14 +315,14 @@ export const AdminDashboard = () => {
           Métodos de Pago
         </button>
         <button
-          onClick={() => setActiveTab('empleados')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'empleados'
+          onClick={() => setActiveTab('usuarios')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === 'usuarios'
             ? 'bg-blue-600 text-white'
             : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
             }`}
         >
           <Users className="w-4 h-4" />
-          Empleados
+          Usuarios
         </button>
       </div>
 
@@ -310,7 +332,7 @@ export const AdminDashboard = () => {
             {activeTab === 'ventas' && 'Historial de Ventas'}
             {activeTab === 'peliculas' && 'Gestión de Películas'}
             {activeTab === 'metodosPago' && 'Métodos de Pago'}
-            {activeTab === 'empleados' && 'Gestión de Empleados'}
+            {activeTab === 'usuarios' && 'Gestión de Usuarios'}
           </h2>
 
           {activeTab === 'peliculas' && (
@@ -345,13 +367,13 @@ export const AdminDashboard = () => {
             </button>
           )}
 
-          {activeTab === 'empleados' && (
+          {activeTab === 'usuarios' && (
             <button
               onClick={openNewUserModal}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Nuevo Empleado
+              Nuevo Usuario
             </button>
           )}
         </div>
@@ -501,7 +523,7 @@ export const AdminDashboard = () => {
               </div>
             )}
 
-            {activeTab === 'empleados' && (
+            {activeTab === 'usuarios' && (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-800">
@@ -509,35 +531,47 @@ export const AdminDashboard = () => {
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">ID</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Nombre</th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Rol</th>
                       <th className="px-6 py-4 text-right text-xs font-semibold text-gray-300 uppercase tracking-wider">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {empleados.map((empleado) => (
-                      <tr key={empleado.id} className="hover:bg-gray-800 transition-colors">
+                    {usuarios.map((usuario) => (
+                      <tr key={usuario.id} className="hover:bg-gray-800 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-gray-300 font-medium">#{empleado.id}</span>
+                          <span className="text-gray-300 font-medium">#{usuario.id}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-blue-500" />
-                            <span className="text-white font-medium">{empleado.nombreCompleto}</span>
+                            <span className="text-white font-medium">
+                              {'nombreCompleto' in usuario ? usuario.nombreCompleto : `${usuario.nombre} ${usuario.apellido}`}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-gray-300">{empleado.email}</span>
+                          <span className="text-gray-300">{usuario.email}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${usuario.rolId === 1 ? 'bg-red-500 bg-opacity-20 text-red-400' :
+                            usuario.rolId === 2 ? 'bg-green-500 bg-opacity-20 text-green-400' :
+                              usuario.rolId === 3 ? 'bg-blue-500 bg-opacity-20 text-blue-400' :
+                                'bg-purple-500 bg-opacity-20 text-purple-400'
+                            }`}>
+                            {usuario.rol?.nombre || (usuario.rolId === 1 ? 'Admin' : usuario.rolId === 2 ? 'Cliente' : usuario.rolId === 3 ? 'Empleado' : 'SuperUsuario')}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => openEditUserModal(empleado)}
+                              onClick={() => openEditUserModal(usuario)}
                               className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
                               title="Editar"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteUser(empleado.id)}
+                              onClick={() => handleDeleteUser(usuario.id)}
                               className="p-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-colors"
                               title="Eliminar"
                             >
@@ -549,9 +583,9 @@ export const AdminDashboard = () => {
                     ))}
                   </tbody>
                 </table>
-                {empleados.length === 0 && (
+                {usuarios.length === 0 && (
                   <div className="text-center py-10 text-gray-400">
-                    No hay empleados registrados
+                    No hay usuarios registrados
                   </div>
                 )}
               </div>
@@ -579,11 +613,19 @@ export const AdminDashboard = () => {
       )}
 
       {showUserForm && (
-        <UserForm
-          onSubmit={handleUserSubmit}
-          initialData={selectedUser}
-          onClose={() => setShowUserForm(false)}
-        />
+        isSuperUsuario ? (
+          <SuperUserForm
+            onSubmit={handleUserSubmit}
+            initialData={selectedUser as AdminUsuarioCompleto | null}
+            onClose={() => setShowUserForm(false)}
+          />
+        ) : (
+          <UserForm
+            onSubmit={handleUserSubmit}
+            initialData={selectedUser as UsuarioCompleto | null}
+            onClose={() => setShowUserForm(false)}
+          />
+        )
       )}
     </div>
   );

@@ -8,9 +8,21 @@ import type {
   Compra,
   CompraRequest,
   DetalleCompraRequest,
-  Genero, // Added
-  Clasificacion, // Added
-  MetodoPago, // Added
+  Genero,
+  Clasificacion,
+  MetodoPago,
+  UserProfile,
+  ActiveTicket,
+  PurchaseHistoryItem,
+  UpdatePasswordRequest,
+  UserPreferences,
+  UsuarioCompleto,
+  CreateUserRequest,
+  UpdateUserRequest,
+  EmployeePurchaseRequest,
+  AdminUsuarioCompleto,
+  CreateAdminUserRequest,
+  UpdateAdminUserRequest,
 } from '../types';
 
 export const authService = {
@@ -68,7 +80,7 @@ export const generosService = {
 // NEW: Clasificaciones Service
 export const clasificacionesService = {
   getAll: async (): Promise<Clasificacion[]> => {
-    const { data } = await axiosInstance.get('/api/Clasificaciones');
+    const { data } = await axiosInstance.get('/api/Clasificacions'); // ← Nombre correcto del backend
     return data;
   },
 };
@@ -99,6 +111,11 @@ export const comprasService = {
   createDetalle: async (detalle: DetalleCompraRequest): Promise<void> => {
     await axiosInstance.post('/api/DetalleCompras', detalle);
   },
+
+  createEmployeePurchase: async (purchaseData: EmployeePurchaseRequest): Promise<Compra> => {
+    const { data } = await axiosInstance.post('/api/compras/empleado', purchaseData);
+    return data;
+  },
 };
 
 // NEW: MetodoPago Service
@@ -120,5 +137,76 @@ export const metodoPagoService = {
 
   delete: async (id: number): Promise<void> => {
     await axiosInstance.delete(`/api/MetodoPagoes/${id}`);
+  },
+};
+
+// NEW: Profile Service
+export const profileService = {
+  getProfile: async (): Promise<UserProfile> => {
+    const { data } = await axiosInstance.get('/api/user/profile');
+    return data;
+  },
+  getActiveTickets: async (): Promise<ActiveTicket[]> => {
+    const { data } = await axiosInstance.get('/api/user/tickets/active');
+    return data;
+  },
+  getPurchaseHistory: async (): Promise<PurchaseHistoryItem[]> => {
+    const { data } = await axiosInstance.get('/api/user/orders/history');
+    return data;
+  },
+  updateProfile: async (profileData: UserProfile): Promise<UserProfile> => {
+    const { data } = await axiosInstance.put('/api/user/profile', profileData);
+    return data;
+  },
+  updatePassword: async (passwordData: UpdatePasswordRequest): Promise<void> => {
+    await axiosInstance.post('/api/user/security/password', passwordData);
+  },
+  updatePreferences: async (preferencesData: UserPreferences): Promise<UserPreferences> => {
+    const { data } = await axiosInstance.put('/api/user/preferences', preferencesData);
+    return data;
+  },
+};
+
+// NEW: Usuarios Service (User Management for Admin)
+export const usuariosService = {
+  getAll: async (): Promise<UsuarioCompleto[]> => {
+    const { data } = await axiosInstance.get('/api/Usuarios');
+    return data;
+  },
+
+  create: async (userData: CreateUserRequest): Promise<UsuarioCompleto> => {
+    const { data } = await axiosInstance.post('/api/Usuarios', userData);
+    return data;
+  },
+
+  update: async (id: number, userData: UpdateUserRequest): Promise<UsuarioCompleto> => {
+    const { data } = await axiosInstance.put(`/api/Usuarios/${id}`, userData);
+    return data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await axiosInstance.delete(`/api/Usuarios/${id}`);
+  },
+};
+
+// NEW: UsuariosAdmin Service (SuperUsuario manages only Admin/Empleado)
+export const usuariosAdminService = {
+  getAll: async (): Promise<AdminUsuarioCompleto[]> => {
+    const { data } = await axiosInstance.get('/api/UsuariosAdmin');
+    return data;
+  },
+
+  create: async (userData: CreateAdminUserRequest): Promise<AdminUsuarioCompleto> => {
+    const { data } = await axiosInstance.post('/api/UsuariosAdmin', userData);
+    return data;
+  },
+
+  update: async (id: number, userData: UpdateAdminUserRequest): Promise<AdminUsuarioCompleto> => {
+    const { data } = await axiosInstance.put(`/api/UsuariosAdmin/${id}`, userData);
+    return data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await axiosInstance.delete(`/api/UsuariosAdmin/${id}`);
   },
 };

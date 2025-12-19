@@ -13,13 +13,16 @@ const activeLinkStyle = {
 };
 
 export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
-  const { isAuthenticated, isAdmin, isEmployee } = useAuth(); // Get auth context
+  const { isAuthenticated, isAdmin, isEmployee, isSuperUsuario } = useAuth(); // Get auth context
+
+  // Cliente es el usuario que NO es Admin, Empleado ni SuperUsuario
+  const isCliente = isAuthenticated && !isAdmin && !isEmployee && !isSuperUsuario;
 
   // Base navigation items
   const baseNavItems = [
     { to: '/', text: 'Inicio / Cartelera', icon: <Home className="w-5 h-5" />, show: true },
-    { to: '/mis-entradas', text: 'Mis Entradas', icon: <Ticket className="w-5 h-5" />, show: isAuthenticated },
-    { to: '/historial', text: 'Historial de Compras', icon: <History className="w-5 h-5" />, show: isAuthenticated },
+    { to: '/mis-entradas', text: 'Mis Entradas', icon: <Ticket className="w-5 h-5" />, show: isCliente }, // Solo Cliente
+    { to: '/historial', text: 'Historial de Compras', icon: <History className="w-5 h-5" />, show: isCliente }, // Solo Cliente
     { to: '/configuracion', text: 'Configuración', icon: <Settings className="w-5 h-5" />, show: isAuthenticated },
     { to: '/admin', text: 'Panel Admin', icon: <LayoutDashboard className="w-5 h-5" />, show: isAdmin },
     { to: '/employee-sale', text: 'Panel Empleado', icon: <Briefcase className="w-5 h-5" />, show: isEmployee },
@@ -31,17 +34,15 @@ export const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
     <>
       {/* Overlay for mobile view */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 md:hidden ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black bg-opacity-50 z-30 transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={() => setIsOpen(false)}
       ></div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-gray-900 text-gray-300 w-64 transform transition-transform duration-300 ease-in-out z-40 md:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed top-0 left-0 h-full bg-gray-900 text-gray-300 w-64 transform transition-transform duration-300 ease-in-out z-40 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-800">
           <h2 className="text-xl font-bold text-white">Menú</h2>

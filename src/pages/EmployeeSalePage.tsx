@@ -82,19 +82,20 @@ export const EmployeeSalePage = () => {
                 return;
             }
 
-            const compraData: CompraRequest = {
+            const purchaseData = {
                 usuarioId: customerIdNum, // El empleado compra para este cliente
                 metodoPagoId: selectedMetodoPagoId,
                 total: funcion.precio,
+                detallesCompra: [
+                    {
+                        funcionId: funcion.id,
+                        cantidad: 1,
+                        precioUnitario: funcion.precio,
+                    },
+                ],
             };
 
-            const nuevaCompra = await comprasService.create(compraData);
-            await comprasService.createDetalle({
-                compraId: nuevaCompra.id,
-                funcionId: funcion.id,
-                cantidad: 1,
-                precioUnitario: funcion.precio,
-            });
+            const nuevaCompra = await comprasService.createEmployeePurchase(purchaseData);
 
             setSuccess(`¡Venta realizada con éxito para el cliente ID ${customerId}! ID de compra: ${nuevaCompra.id}`);
             // Redirigir o limpiar el formulario para una nueva venta
@@ -197,6 +198,11 @@ export const EmployeeSalePage = () => {
                                     className="form-radio h-5 w-5 text-blue-600 bg-gray-900 border-gray-500 focus:ring-blue-500"
                                 />
                                 <span className="ml-3 text-lg font-medium text-white">{metodo.nombre}</span>
+                                {metodo.tipo === 'Presencial' && (
+                                    <span className="ml-2 px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs font-semibold rounded-full">
+                                        Presencial
+                                    </span>
+                                )}
                             </label>
                         ))}
                     </div>

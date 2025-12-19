@@ -1,84 +1,157 @@
-// src/components/ProfileForm.tsx
-import { useState, useEffect } from 'react';
-import type { UserProfile } from '../types';
-import { Edit2 } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { User, Mail, Save, Loader2 } from 'lucide-react';
+import { Toast } from './Toast';
 
 interface ProfileFormProps {
-  initialData: UserProfile;
+  initialData: any; // Not used, keeping for compatibility
 }
 
 export const ProfileForm = ({ initialData }: ProfileFormProps) => {
-  const [profile, setProfile] = useState<UserProfile>(initialData);
-  const [saved, setSaved] = useState(false);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    setProfile(initialData);
-  }, [initialData]);
+  const [formData, setFormData] = useState({
+    nombre: user?.usuario?.split(' ')[0] || '',
+    apellido: user?.usuario?.split(' ').slice(1).join(' ') || '',
+    email: '',
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value } as UserProfile));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would send this data to the backend
-    console.log('Saving profile:', profile);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setIsSubmitting(true);
+    setToast(null);
+
+    try {
+      // TODO: Implementar llamada al endpoint de actualización de perfil
+      // await profileService.updateProfile(formData);
+
+      // Simulación temporal
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setToast({ message: 'Perfil actualizado correctamente', type: 'success' });
+    } catch (err) {
+      setToast({ message: 'Error al actualizar el perfil', type: 'error' });
+      console.error('Failed to save profile:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
-      {/* Avatar Section */}
-      <div className="flex items-center gap-6">
-        <div className="relative">
-          <img 
-            src={profile.posterUrl || `https://ui-avatars.com/api/?name=${profile.firstName}+${profile.lastName}&background=3b82f6&color=fff`} 
-            alt="Avatar" 
-            className="w-24 h-24 rounded-full object-cover"
-          />
-          <button type="button" className="absolute bottom-0 right-0 bg-gray-700 p-2 rounded-full hover:bg-gray-600">
-            <Edit2 className="w-4 h-4 text-white" />
+    <div className="max-w-2xl">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* User Info Header */}
+      <div className="bg-gray-800 rounded-lg p-6 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-blue-600 rounded-full p-4">
+            <User className="w-12 h-12 text-white" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-bold text-white">{user?.usuario || 'Usuario'}</h3>
+            <p className="text-gray-400">Rol: <span className="text-blue-400">{user?.rol || 'N/A'}</span></p>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h4 className="text-lg font-bold text-white mb-4">Información Personal</h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nombre */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Nombre
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
+                  placeholder="Juan"
+                />
+              </div>
+            </div>
+
+            {/* Apellido */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Apellido
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  name="apellido"
+                  value={formData.apellido}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
+                  placeholder="Pérez"
+                />
+              </div>
+            </div>
+
+            {/* Email (Read-only for now) */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
+                  placeholder="usuario@ejemplo.com"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Puedes actualizar tu email aquí</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-4">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg transition-colors font-medium"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                Guardar Cambios
+              </>
+            )}
           </button>
         </div>
-        <div>
-          <h3 className="text-xl font-bold text-white">Tu Avatar</h3>
-          <p className="text-sm text-gray-400">Haz clic en el lápiz para cambiarlo.</p>
-        </div>
-      </div>
+      </form>
 
-      {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">Nombre</label>
-          <input type="text" name="firstName" id="firstName" value={profile.firstName} onChange={handleChange} className="form-input" />
-        </div>
-        <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">Apellido</label>
-          <input type="text" name="lastName" id="lastName" value={profile.lastName} onChange={handleChange} className="form-input" />
-        </div>
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">Celular</label>
-          <input type="tel" name="phone" id="phone" value={profile.phone} onChange={handleChange} className="form-input" />
-        </div>
-        <div>
-          <label htmlFor="birthDate" className="block text-sm font-medium text-gray-300 mb-1">Fecha de Nacimiento</label>
-          <input type="date" name="birthDate" id="birthDate" value={profile.birthDate} onChange={handleChange} className="form-input" />
-        </div>
-        <div className="md:col-span-2">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-          <input type="email" name="email" id="email" value={profile.email} disabled className="form-input bg-gray-700/50 cursor-not-allowed" />
-        </div>
+      {/* Info box */}
+      <div className="mt-6 bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
+        <p className="text-sm text-blue-300">
+          <strong>Nota:</strong> Los cambios en tu perfil se aplicarán inmediatamente. Si necesitas cambiar tu contraseña, utiliza la pestaña "Seguridad".
+        </p>
       </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-4">
-        <button type="submit" className="btn-primary">
-          Guardar Cambios
-        </button>
-        {saved && <span className="text-green-400 text-sm">¡Perfil guardado correctamente!</span>}
-      </div>
-    </form>
+    </div>
   );
 };

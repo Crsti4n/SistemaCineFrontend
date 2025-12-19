@@ -24,7 +24,18 @@ export const Login = () => {
       setLoading(true);
       const userData = await authService.login(formData);
       login(userData);
-      navigate('/');
+
+      // Redirección basada en rol
+      if (userData.rol === 'SuperUsuario') {
+        navigate('/superadmin');
+      } else if (userData.rol === 'Admin') {
+        navigate('/admin');
+      } else if (userData.rol === 'Empleado') {
+        navigate('/employee-sale');
+      } else {
+        // Cliente va al home
+        navigate('/');
+      }
     } catch (err) {
       setError('Credenciales inválidas. Verifica tu email y contraseña.');
     } finally {

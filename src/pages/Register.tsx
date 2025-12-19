@@ -10,7 +10,8 @@ export const Register = () => {
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    nombreCompleto: '',
+    nombre: '',
+    apellido: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -35,10 +36,10 @@ export const Register = () => {
     try {
       setLoading(true);
       const userData = await authService.register({
-        nombreCompleto: formData.nombreCompleto,
+        nombre: formData.nombre,
+        apellido: formData.apellido,
         email: formData.email,
         password: formData.password,
-        rolId: 2,
       });
       login(userData);
       navigate('/');
@@ -73,18 +74,38 @@ export const Register = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Nombre Completo
+              Nombre
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                name="nombreCompleto"
-                value={formData.nombreCompleto}
+                name="nombre"
+                value={formData.nombre}
                 onChange={handleChange}
                 required
+                maxLength={50}
                 className="w-full pl-10 pr-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
-                placeholder="Juan Pérez"
+                placeholder="Juan"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Apellido
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                name="apellido"
+                value={formData.apellido}
+                onChange={handleChange}
+                required
+                maxLength={50}
+                className="w-full pl-10 pr-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all"
+                placeholder="Pérez"
               />
             </div>
           </div>

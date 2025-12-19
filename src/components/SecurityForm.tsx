@@ -1,17 +1,20 @@
-// src/components/SecurityForm.tsx
 import { useState } from 'react';
+import { profileService } from '../api/services';
+import type { UpdatePasswordRequest } from '../types';
+import { Loader2 } from 'lucide-react';
 
 export const SecurityForm = () => {
   const [passwords, setPasswords] = useState({
-    current: '',
-    new: '',
-    confirm: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const passwordsMatch = passwords.new && passwords.new === passwords.confirm;
-  const newPasswordIsStrong = passwords.new.length >= 8;
+  const passwordsMatch = passwords.newPassword && passwords.newPassword === passwords.confirmPassword;
+  const newPasswordIsStrong = passwords.newPassword.length >= 8;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -20,7 +23,7 @@ export const SecurityForm = () => {
     setSuccess('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordsMatch) {
       setError('Las nuevas contraseñas no coinciden.');
@@ -30,38 +33,53 @@ export const SecurityForm = () => {
       setError('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
-    // In a real app, send to backend
-    console.log('Changing password...');
+    
+    setIsSubmitting(true);
     setError('');
-    setSuccess('¡Contraseña actualizada correctamente!');
-    setPasswords({ current: '', new: '', confirm: '' });
-    setTimeout(() => setSuccess(''), 3000);
+    setSuccess('');
+    
+    try {
+      const request: UpdatePasswordRequest = {
+        currentPassword: passwords.currentPassword,
+        newPassword: passwords.newPassword,
+        confirmPassword: passwords.confirmPassword,
+      };
+      await profileService.updatePassword(request);
+      setSuccess('¡Contraseña actualizada correctamente!');
+      setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al cambiar la contraseña.');
+      console.error('Failed to change password:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
       <div>
-        <label htmlFor="current" className="block text-sm font-medium text-gray-300 mb-1">Contraseña Actual</label>
-        <input type="password" name="current" id="current" value={passwords.current} onChange={handleChange} required className="form-input" />
+        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-300 mb-1">Contraseña Actual</label>
+        <input type="password" name="currentPassword" id="currentPassword" value={passwords.currentPassword} onChange={handleChange} required className="form-input" />
       </div>
       
       <div>
-        <label htmlFor="new" className="block text-sm font-medium text-gray-300 mb-1">Nueva Contraseña</label>
-        <input type="password" name="new" id="new" value={passwords.new} onChange={handleChange} required className="form-input" />
-        {passwords.new && !newPasswordIsStrong && <p className="text-xs text-yellow-400 mt-1">Debe tener al menos 8 caracteres.</p>}
+        <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300 mb-1">Nueva Contraseña</label>
+        <input type="password" name="newPassword" id="newPassword" value={passwords.newPassword} onChange={handleChange} required className="form-input" />
+        {passwords.newPassword && !newPasswordIsStrong && <p className="text-xs text-yellow-400 mt-1">Debe tener al menos 8 caracteres.</p>}
       </div>
       
       <div>
-        <label htmlFor="confirm" className="block text-sm font-medium text-gray-300 mb-1">Confirmar Nueva Contraseña</label>
-        <input type="password" name="confirm" id="confirm" value={passwords.confirm} onChange={handleChange} required className="form-input" />
-        {passwords.confirm && !passwordsMatch && <p className="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>}
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">Confirmar Nueva Contraseña</label>
+        <input type="password" name="confirmPassword" id="confirmPassword" value={passwords.confirmPassword} onChange={handleChange} required className="form-input" />
+        {passwords.confirmPassword && !passwordsMatch && <p className="text-xs text-red-400 mt-1">Las contraseñas no coinciden.</p>}
       </div>
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
       
       <div className="flex items-center gap-4">
-        <button type="submit" className="btn-primary" disabled={!passwordsMatch || !newPasswordIsStrong}>
-          Cambiar Contraseña
+        <button type="submit" className="btn-primary w-40" disabled={!passwordsMatch || !newPasswordIsStrong || isSubmitting}>
+           {isSubmitting ? <Loader2 className="w-5 h-5 mx-auto animate-spin" /> : 'Cambiar Contraseña'}
         </button>
         {success && <span className="text-green-400 text-sm">{success}</span>}
       </div>

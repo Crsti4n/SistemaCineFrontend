@@ -7,7 +7,8 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  isEmployee: boolean; // Added isEmployee
+  isEmployee: boolean;
+  isSuperUsuario: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,10 +35,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isAuthenticated = !!user;
   const isAdmin = user?.rol === 'Admin';
-  const isEmployee = user?.rol === 'Empleado'; // Added isEmployee
+  const isEmployee = user?.rol === 'Empleado';
+  const isSuperUsuario = user?.rol === 'SuperUsuario';
 
-  return ( // Added isEmployee to context value
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAdmin, isEmployee }}>
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAdmin, isEmployee, isSuperUsuario }}>
       {children}
     </AuthContext.Provider>
   );

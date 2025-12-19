@@ -47,11 +47,12 @@ export const CheckoutPage = () => {
         const loadMetodosPago = async () => {
             try {
                 setLoading(true);
-                const data = await metodoPagoService.getAll();
-                setMetodosPago(data);
+                const allMetodos = await metodoPagoService.getAll();
+                const onlineMetodos = allMetodos.filter(metodo => metodo.tipo === 'Online');
+                setMetodosPago(onlineMetodos);
                 // Seleccionar el primer método por defecto si existe
-                if (data.length > 0) {
-                    setSelectedMetodoPagoId(data[0].id);
+                if (onlineMetodos.length > 0) {
+                    setSelectedMetodoPagoId(onlineMetodos[0].id);
                 }
             } catch (err) {
                 setError('Error al cargar los métodos de pago disponibles.');

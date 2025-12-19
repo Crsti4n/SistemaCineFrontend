@@ -4,11 +4,12 @@ import { useAuth } from '../context/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
-  requireEmployee?: boolean; // Added requireEmployee prop
+  requireEmployee?: boolean;
+  requireSuperUsuario?: boolean;
 }
 
-export const ProtectedRoute = ({ children, requireAdmin = false, requireEmployee = false }: ProtectedRouteProps) => {
-  const { isAuthenticated, isAdmin, isEmployee } = useAuth(); // Added isEmployee
+export const ProtectedRoute = ({ children, requireAdmin = false, requireEmployee = false, requireSuperUsuario = false }: ProtectedRouteProps) => {
+  const { isAuthenticated, isAdmin, isEmployee, isSuperUsuario } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -18,7 +19,11 @@ export const ProtectedRoute = ({ children, requireAdmin = false, requireEmployee
     return <Navigate to="/" replace />;
   }
 
-  if (requireEmployee && !isEmployee) { // Added logic for requireEmployee
+  if (requireEmployee && !isEmployee) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireSuperUsuario && !isSuperUsuario) {
     return <Navigate to="/" replace />;
   }
 

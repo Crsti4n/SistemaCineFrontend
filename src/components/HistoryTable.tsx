@@ -1,5 +1,5 @@
 // src/components/HistoryTable.tsx
-import { PurchaseHistoryItem } from '../data/mocks';
+import { PurchaseHistoryItem } from '../../types';
 import { Eye } from 'lucide-react';
 
 interface HistoryTableProps {
@@ -35,17 +35,17 @@ export const HistoryTable = ({ items, onSelectItem }: HistoryTableProps) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-800">
-          {items.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-800/50 transition-colors">
+          {items.map((item, index) => (
+            <tr key={item.id ?? index} className="hover:bg-gray-800/50 transition-colors">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{new Date(item.date).toLocaleDateString()}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                <p className="font-semibold">{item.details.movie}</p>
-                {item.details.confectionery.length > 0 && (
-                  <p className="text-xs text-gray-400">{item.details.confectionery.join(', ')}</p>
+                <p className="font-semibold">{item.details?.movie || 'N/A'}</p>
+                {(item.details?.confectionery?.length ?? 0) > 0 && (
+                  <p className="text-xs text-gray-400">{item.details?.confectionery?.join(', ')}</p>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{item.location}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">S/ {item.total.toFixed(2)}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-white">S/ {(item.total ?? 0).toFixed(2)}</td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(item.status)}`}>
                   {item.status}

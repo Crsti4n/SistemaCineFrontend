@@ -6,9 +6,14 @@ import { Home } from './pages/Home';
 import { MovieDetail } from './pages/MovieDetail';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { EmployeeSalePage } from './pages/EmployeeSalePage'; // Added EmployeeSalePage
+import { EmployeeSalePage } from './pages/EmployeeSalePage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
+import MisEntradasPage from './pages/MisEntradasPage';
+import HistorialPage from './pages/HistorialPage';
+import ConfiguracionPage from './pages/ConfiguracionPage';
+import { ConfirmationPage } from './pages/ConfirmationPage';
 
 function App() {
   return (
@@ -20,7 +25,44 @@ function App() {
             <Route path="pelicula/:id" element={<MovieDetail />} />
             <Route path="login" element={<Login />} />
             <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="confirmation" element={<ConfirmationPage />} />
             <Route path="registro" element={<Register />} />
+
+            {/* Rutas de Perfil Protegidas */}
+            <Route
+              path="mis-entradas"
+              element={
+                <ProtectedRoute>
+                  <MisEntradasPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="historial"
+              element={
+                <ProtectedRoute>
+                  <HistorialPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="configuracion"
+              element={
+                <ProtectedRoute>
+                  <ConfiguracionPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Rutas de Roles Específicos */}
+            <Route
+              path="superadmin"
+              element={
+                <ProtectedRoute requireSuperUsuario>
+                  <SuperAdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="admin"
               element={
@@ -29,7 +71,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* NEW: Route for Employee Sale Page */}
             <Route
               path="employee-sale"
               element={

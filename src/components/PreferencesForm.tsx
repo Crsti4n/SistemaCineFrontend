@@ -1,7 +1,8 @@
-// src/components/PreferencesForm.tsx
 import { useState, useEffect } from 'react';
 import { allMovieGenres } from '../data/mocks';
+import { profileService } from '../api/services';
 import type { UserPreferences } from '../types';
+import { Loader2 } from 'lucide-react';
 
 // A reusable Switch component for the toggles
 const Switch = ({ label, checked, onChange }: { label: string, checked: boolean, onChange: (checked: boolean) => void }) => (
@@ -21,7 +22,9 @@ interface PreferencesFormProps {
 
 export const PreferencesForm = ({ initialData }: PreferencesFormProps) => {
   const [prefs, setPrefs] = useState<UserPreferences>(initialData);
-  const [saved, setSaved] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setPrefs(initialData);
@@ -40,11 +43,22 @@ export const PreferencesForm = ({ initialData }: PreferencesFormProps) => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saving preferences:', prefs);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      await profileService.updatePreferences(prefs);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError('Error al guardar las preferencias.');
+      console.error('Failed to save preferences:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -93,10 +107,15 @@ export const PreferencesForm = ({ initialData }: PreferencesFormProps) => {
 
       {/* Actions */}
       <div className="flex items-center gap-4 border-t border-gray-700 pt-6">
-        <button type="submit" className="btn-primary">
-          Guardar Preferencias
+        <button type="submit" className="btn-primary w-44" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <Loader2 className="w-5 h-5 mx-auto animate-spin" />
+          ) : (
+            'Guardar Preferencias'
+          )}
         </button>
-        {saved && <span className="text-green-400 text-sm">¡Preferencias guardadas!</span>}
+        {success && <span className="text-green-400 text-sm">¡Preferencias guardadas!</span>}
+        {error && <span className="text-red-400 text-sm">{error}</span>}
       </div>
     </form>
   );
