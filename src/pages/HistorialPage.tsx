@@ -20,10 +20,13 @@ const HistorialPage = () => {
         setLoading(true);
         setError(null);
         const data = await profileService.getPurchaseHistory();
+        console.log('📊 Historial recibido del backend:', data);
+        console.log('📊 Primera compra (ejemplo):', data[0]);
         setHistory(data);
       } catch (err) {
-        setError('No se pudo cargar el historial. Por favor, intenta de nuevo más tarde.');
-        console.error(err);
+        // Si el endpoint no está listo, mostrar como historial vacío
+        console.error('❌ Error al cargar historial:', err);
+        setHistory([]);
       } finally {
         setLoading(false);
       }

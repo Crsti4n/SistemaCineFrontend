@@ -8,7 +8,6 @@ import { Popcorn, AlertTriangle } from 'lucide-react';
 const MisEntradasPage = () => {
   const [tickets, setTickets] = useState<ActiveTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -17,8 +16,9 @@ const MisEntradasPage = () => {
         const data = await profileService.getActiveTickets();
         setTickets(data);
       } catch (err) {
-        setError('No se pudieron cargar tus entradas. Por favor, intenta de nuevo más tarde.');
-        console.error(err);
+        // Si el endpoint no está listo, mostrar como sin entradas
+        console.log('Endpoint de entradas no disponible:', err);
+        setTickets([]);
       } finally {
         setLoading(false);
       }
@@ -40,14 +40,7 @@ const MisEntradasPage = () => {
       </Link>
     </div>
   );
-  
-  const ErrorState = () => (
-    <div className="text-center py-16 px-6 bg-red-900/20 border border-red-500/30 rounded-lg flex flex-col items-center">
-      <AlertTriangle className="w-20 h-20 text-red-500 mb-6" strokeWidth={1} />
-      <h2 className="text-2xl font-bold text-white mb-2">¡Ups! Algo salió mal</h2>
-      <p className="text-red-300">{error}</p>
-    </div>
-  );
+
 
   if (loading) {
     return (
@@ -61,9 +54,7 @@ const MisEntradasPage = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold text-white mb-8">Mis Entradas</h1>
-      {error ? (
-        <ErrorState />
-      ) : tickets.length > 0 ? (
+      {tickets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {tickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />

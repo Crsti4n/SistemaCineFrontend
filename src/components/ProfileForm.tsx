@@ -11,8 +11,8 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    nombre: user?.usuario?.split(' ')[0] || '',
-    apellido: user?.usuario?.split(' ').slice(1).join(' ') || '',
+    nombre: user?.nombre || '',
+    apellido: user?.apellido || '',
     email: '',
   });
 
@@ -56,7 +56,7 @@ export const ProfileForm = ({ initialData }: ProfileFormProps) => {
             <User className="w-12 h-12 text-white" />
           </div>
           <div>
-            <h3 className="text-2xl font-bold text-white">{user?.usuario || 'Usuario'}</h3>
+            <h3 className="text-2xl font-bold text-white">{user?.nombre} {user?.apellido || 'Usuario'}</h3>
             <p className="text-gray-400">Rol: <span className="text-blue-400">{user?.rol || 'N/A'}</span></p>
           </div>
         </div>

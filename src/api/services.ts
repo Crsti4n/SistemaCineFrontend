@@ -23,6 +23,9 @@ import type {
   AdminUsuarioCompleto,
   CreateAdminUserRequest,
   UpdateAdminUserRequest,
+  ButacasDisponiblesResponse,
+  BloquearReservaRequest,
+  ReservaResponse,
 } from '../types';
 
 export const authService = {
@@ -108,10 +111,6 @@ export const comprasService = {
     return data;
   },
 
-  createDetalle: async (detalle: DetalleCompraRequest): Promise<void> => {
-    await axiosInstance.post('/api/DetalleCompras', detalle);
-  },
-
   createEmployeePurchase: async (purchaseData: EmployeePurchaseRequest): Promise<Compra> => {
     const { data } = await axiosInstance.post('/api/compras/empleado', purchaseData);
     return data;
@@ -140,23 +139,45 @@ export const metodoPagoService = {
   },
 };
 
-// NEW: Profile Service
+// Profile Service
 export const profileService = {
   getProfile: async (): Promise<UserProfile> => {
     const { data } = await axiosInstance.get('/api/user/profile');
     return data;
   },
+
+  updateProfile: async (profile: UserProfile): Promise<UserProfile> => {
+    const { data } = await axiosInstance.put('/api/user/profile', profile);
+    return data;
+  },
+
   getActiveTickets: async (): Promise<ActiveTicket[]> => {
-    const { data } = await axiosInstance.get('/api/user/tickets/active');
+    const { data } = await axiosInstance.get('/api/user/tickets');
     return data;
   },
+
+  // NUEVO: Endpoint actualizado según backend 2025-12-20
   getPurchaseHistory: async (): Promise<PurchaseHistoryItem[]> => {
-    const { data } = await axiosInstance.get('/api/user/orders/history');
-    return data;
-  },
-  updateProfile: async (profileData: UserProfile): Promise<UserProfile> => {
-    const { data } = await axiosInstance.put('/api/user/profile', profileData);
-    return data;
+    const { data } = await axiosInstance.get<import('../types').CompraHistorial[]>('/api/Compras/usuario/historial');
+
+    // Transformar formato backend a formato frontend
+    return data.map((compra): PurchaseHistoryItem => {
+      // Obtener primer detalle de entrada (si existe)
+      const primeraEntrada = compra.detalles.find(d => d.tipo === 'entrada');
+      const productos = compra.detalles.filter(d => d.tipo === 'producto');
+
+      return {
+        id: compra.compraId,
+        date: compra.fechaCompra,
+        details: {
+          movie: primeraEntrada?.pelicula,
+          confectionery: productos.map(p => p.nombreProducto || 'Producto').filter(Boolean),
+        },
+        location: primeraEntrada?.sala || 'N/A',
+        total: compra.total,
+        status: 'Pagado', // Backend no envía estado, asumir Pagado
+      };
+    });
   },
   updatePassword: async (passwordData: UpdatePasswordRequest): Promise<void> => {
     await axiosInstance.post('/api/user/security/password', passwordData);
@@ -210,3 +231,34 @@ export const usuariosAdminService = {
     await axiosInstance.delete(`/api/UsuariosAdmin/${id}`);
   },
 };
+
+// Servicio de Butacas (Asientos)
+export const butacasService = {
+  // Obtener butacas disponibles para una función
+  getDisponiblesByFuncion: async (funcionId: number): Promise<ButacasDisponiblesResponse> => {
+    const { data } = await axiosInstance.get(`/api/Butacas/disponibles/funcion/${funcionId}`);
+    return data;
+  },
+};
+
+// Servicio de Reservas
+export const reservasService = {
+  // Bloquear butacas temporalmente (10 minutos)
+  bloquear: async (request: BloquearReservaRequest): Promise<ReservaResponse> => {
+    const { data } = await axiosInstance.post('/api/Reservas/bloquear', request);
+    return data;
+  },
+
+  // Obtener estado de una reserva
+  obtener: async (reservaId: string): Promise<ReservaResponse> => {
+    const { data } = await axiosInstance.get(`/api/Reservas/${reservaId}`);
+    return data;
+  },
+
+  // Cancelar reserva
+  cancelar: async (reservaId: string): Promise<{ mensaje: string; butacasLiberadas: number }> => {
+    const { data } = await axiosInstance.delete(`/api/Reservas/${reservaId}/cancelar`);
+    return data;
+  },
+};
+

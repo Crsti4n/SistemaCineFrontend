@@ -13,7 +13,7 @@ export const Layout = () => {
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Pass state setter to Navbar and Sidebar */}
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setSidebarOpen} />
-      
+
       <div className="flex flex-col flex-1 md:ml-64">
         <Navbar setSidebarOpen={setSidebarOpen} />
         <main className="flex-grow p-4 sm:p-6 lg:p-8">
@@ -22,7 +22,7 @@ export const Layout = () => {
       </div>
 
       {/* Render ChatWidget only for authenticated, non-admin users */}
-      {isAuthenticated && !isAdmin && <CineChatWidget key={user?.usuario} />}
+      {isAuthenticated && !isAdmin && <CineChatWidget key={user?.token || 'chat'} />}
     </div>
   );
 };

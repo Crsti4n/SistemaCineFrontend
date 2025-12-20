@@ -22,22 +22,33 @@ export const Login = () => {
 
     try {
       setLoading(true);
+      console.log('🔐 Intentando login...');
       const userData = await authService.login(formData);
+      console.log('📦 Datos recibidos del backend:', userData);
+
       login(userData);
 
-      // Redirección basada en rol
+      // Verificar que se guardó
+      const saved = localStorage.getItem('authData');
+      console.log('💾 Verificando localStorage después de login:', saved ? 'GUARDADO ✅' : 'NO GUARDADO ❌');
+
+      // Role-based redirection
       if (userData.rol === 'SuperUsuario') {
+        console.log('🔀 Redirigiendo a /superadmin');
         navigate('/superadmin');
       } else if (userData.rol === 'Admin') {
+        console.log('🔀 Redirigiendo a /admin');
         navigate('/admin');
       } else if (userData.rol === 'Empleado') {
+        console.log('🔀 Redirigiendo a /employee-sale');
         navigate('/employee-sale');
       } else {
-        // Cliente va al home
+        console.log('🔀 Redirigiendo a /');
         navigate('/');
       }
     } catch (err) {
-      setError('Credenciales inválidas. Verifica tu email y contraseña.');
+      setError('Credenciales incorrectas. Inténtalo de nuevo.');
+      console.error('❌ Error en login:', err);
     } finally {
       setLoading(false);
     }

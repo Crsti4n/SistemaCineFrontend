@@ -57,7 +57,7 @@ export const Navbar = ({ setSidebarOpen }: NavbarProps) => {
               <>
                 <div className="flex items-center gap-2 text-white">
                   <User className="w-5 h-5" />
-                  <span className="font-medium hidden sm:inline">Hola, {user?.usuario}</span>
+                  <span className="font-medium hidden sm:inline">Hola, {user?.nombre || 'Usuario'}</span>
                 </div>
                 <button
                   onClick={handleLogout}
